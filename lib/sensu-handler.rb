@@ -106,12 +106,14 @@ module Sensu
       interval = (@event['check']['interval'] || defaults['interval']).to_i
       refresh = (@event['check']['refresh'] || defaults['refresh']).to_i
       if @event['occurrences'] < occurrences
-        bail 'not enough occurrences'
+        bail "not enough occurrences (#{@event['occurrences']} < #{occurrences})"
       end
       if @event['occurrences'] > occurrences && @event['action'] == 'create'
-        number = refresh.fdiv(interval).to_i
-        unless number == 0 || @event['occurrences'] % number == 0
-          bail 'only handling every ' + number.to_s + ' occurrences'
+        refresh_intervals = refresh.fdiv(interval).to_i
+        current = @event['occurrences'] % refresh_intervals
+        unless refresh_intervals == 0 || current == 0
+          bail 'only handling every ' + refresh_intervals.to_s +
+               " occurrences (next in #{refresh_intervals - current} events)"
         end
       end
     end
